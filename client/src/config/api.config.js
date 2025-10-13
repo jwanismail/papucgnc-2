@@ -6,7 +6,7 @@ const API_CONFIG = {
   },
   // Production - Railway backend
   production: {
-    baseURL: import.meta.env.VITE_API_URL || 'https://your-railway-backend.up.railway.app/api'
+    baseURL: 'https://papucgnc-2-production.up.railway.app/api'
   }
 }
 
