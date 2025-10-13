@@ -1,0 +1,29 @@
+{
+  "name": "papucgnc",
+  "version": "1.0.0",
+  "description": "Modern e-commerce shoe store built with React, Vite, Express and Prisma",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "setup": "npm run install:all && cd server && npx prisma generate && npx prisma migrate dev --name init"
+  },
+  "keywords": [
+    "ecommerce",
+    "shoes",
+    "react",
+    "vite",
+    "express",
+    "prisma",
+    "tailwindcss"
+  ],
+  "author": "Papucgnc",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

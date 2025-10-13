@@ -1,0 +1,81 @@
+// Prisma Schema - Papucgnc E-Ticaret
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  image       String
+  images      String?  // JSON string olarak çoklu resimler
+  stock       Int      @default(0)
+  sizeStock   String?  // JSON string: { "36": 10, "37": 15, ... }
+  campaignId  String?
+  campaign    Campaign? @relation(fields: [campaignId], references: [id])
+  colorOptions String? // JSON string: [{ name: "Siyah", images: ["/uploads/..."] }]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([campaignId])
+}
+
+model Campaign {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  type        String    // "second_pair_699" veya "normal"
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+
+model Order {
+  id          String   @id @default(uuid())
+  orderNumber String   @unique // Sipariş numarası (örn: PAP-2024-001)
+  
+  // Müşteri Bilgileri
+  firstName   String
+  lastName    String
+  phone       String
+  email       String
+  address     String
+  detailedAddress String? // Detaylı adres (Bina no, daire no vb.)
+  city        String
+  district    String
+  orderNote   String?
+  billingAddressDifferent Boolean @default(false)
+  
+  // Sipariş Detayları
+  items       String   // JSON string olarak sipariş ürünleri
+  totalAmount Float    // Toplam tutar
+  campaignDiscount Float @default(0) // Kampanya indirimi
+  shippingCost Float   @default(0) // Kargo ücreti
+  paymentMethod String // "bank_transfer", "cash_on_delivery", "card_on_delivery"
+  shippingMethod String // Kargo yöntemi
+  
+  // Sipariş Durumu
+  status      String   @default("pending") // "pending", "confirmed", "preparing", "shipped", "delivered", "cancelled"
+  paymentStatus String @default("pending") // "pending", "paid", "failed", "refunded"
+  
+  // Tarihler
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  confirmedAt DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
