@@ -45,6 +45,11 @@ const upload = multer({
     files: 50 // Maximum 50 files (ana resimler + renk resimleri)
   },
   fileFilter: (req, file, cb) => {
+    // Sadece image field'larını kontrol et
+    if (file.fieldname !== 'images' && file.fieldname !== 'colorImages') {
+      return cb(null, false);
+    }
+    
     const allowedTypes = /jpeg|jpg|png|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
@@ -52,7 +57,7 @@ const upload = multer({
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Sadece resim dosyaları yüklenebilir!'));
+      cb(new Error('Sadece resim dosyaları yüklenebilir! (JPEG, JPG, PNG, WEBP)'));
     }
   }
 });

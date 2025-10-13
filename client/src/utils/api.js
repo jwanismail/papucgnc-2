@@ -1,10 +1,12 @@
 import axios from 'axios'
+import apiConfig from '../config/api.config'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiConfig.baseURL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: false
 })
 
 // Request interceptor
