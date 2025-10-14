@@ -18,10 +18,18 @@ const ProductListPage = () => {
         axios.get('/api/products'),
         axios.get('/api/campaigns')
       ])
-      setProducts(productsRes.data)
-      setCampaigns(campaignsRes.data)
+      
+      // Defensive: Array kontrolü
+      const productsData = Array.isArray(productsRes.data) ? productsRes.data : []
+      const campaignsData = Array.isArray(campaignsRes.data) ? campaignsRes.data : []
+      
+      setProducts(productsData)
+      setCampaigns(campaignsData)
     } catch (error) {
       console.error('Veri yüklenirken hata:', error)
+      // Hata durumunda boş array kullan
+      setProducts([])
+      setCampaigns([])
     } finally {
       setLoading(false)
     }
