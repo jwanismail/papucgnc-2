@@ -21,9 +21,10 @@ const AdminCampaigns = () => {
   const fetchCampaigns = async () => {
     try {
       const response = await axios.get('/api/campaigns')
-      setCampaigns(response.data)
+      setCampaigns(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Kampanyalar yüklenirken hata:', error)
+      setCampaigns([])
     }
   }
 

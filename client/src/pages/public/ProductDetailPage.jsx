@@ -48,9 +48,10 @@ const ProductDetailPage = () => {
   const fetchProduct = async () => {
     try {
       const response = await axios.get(`/api/products/${id}`)
-      setProduct(response.data)
+      setProduct(response.data || null)
     } catch (error) {
       console.error('Ürün yüklenirken hata:', error)
+      setProduct(null)
     } finally {
       setLoading(false)
     }

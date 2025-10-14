@@ -43,9 +43,10 @@ const AdminProducts = () => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get('/api/products')
-      setProducts(response.data)
+      setProducts(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Ürünler yüklenirken hata:', error)
+      setProducts([])
     } finally {
       setLoading(false)
     }
@@ -54,9 +55,10 @@ const AdminProducts = () => {
   const fetchCampaigns = async () => {
     try {
       const response = await axios.get('/api/campaigns')
-      setCampaigns(response.data)
+      setCampaigns(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Kampanyalar yüklenirken hata:', error)
+      setCampaigns([])
     }
   }
 

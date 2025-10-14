@@ -29,15 +29,18 @@ const AdminOrders = () => {
     try {
       const url = filter === 'all' ? '/api/orders' : `/api/orders?status=${filter}`
       const response = await axios.get(url)
-      setOrders(response.data.orders)
+      const ordersData = Array.isArray(response.data?.orders) ? response.data.orders : []
+      setOrders(ordersData)
       
       // Bekleyen sipariş sayısını al
       if (filter === 'all') {
         const pendingResponse = await axios.get('/api/orders?status=pending')
-        setPendingCount(pendingResponse.data.orders.length)
+        const pendingData = Array.isArray(pendingResponse.data?.orders) ? pendingResponse.data.orders : []
+        setPendingCount(pendingData.length)
       }
     } catch (error) {
       console.error('Siparişler yüklenirken hata:', error)
+      setOrders([])
     } finally {
       setLoading(false)
     }
