@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import useCartStore from '../../store/cartStore'
+import { buildAssetUrl } from '../../utils/api'
 
 const ProductCard = ({ product }) => {
   const addItem = useCartStore((state) => state.addItem)
@@ -18,7 +19,7 @@ const ProductCard = ({ product }) => {
           {product.images && product.images.length > 0 ? (
             <div className="relative w-full h-full">
               <img
-                src={`http://localhost:5000${product.images[0]}`}
+                src={buildAssetUrl(product.images[0])}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-300"
                 loading="lazy"
@@ -31,7 +32,7 @@ const ProductCard = ({ product }) => {
             </div>
           ) : product.image ? (
             <img
-              src={`http://localhost:5000${product.image}`}
+              src={buildAssetUrl(product.image)}
               alt={product.name}
               className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-300"
               loading="lazy"

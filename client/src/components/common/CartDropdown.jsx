@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import useCartStore from '../../store/cartStore'
+import { buildAssetUrl } from '../../utils/api'
 
 const CartDropdown = ({ isOpen, onClose }) => {
   const { items, removeItem, getTotalItems, getTotalPrice, getCampaignDiscount } = useCartStore()
@@ -42,7 +43,7 @@ const CartDropdown = ({ isOpen, onClose }) => {
                       <div className="w-16 h-20 bg-neutral-100 overflow-hidden flex-shrink-0">
                         {displayImage ? (
                           <img
-                            src={`http://localhost:5000${displayImage}`}
+                            src={buildAssetUrl(displayImage)}
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />

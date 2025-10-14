@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import api from '../../utils/api'
 import ProductCard from '../../components/product/ProductCard'
 
 const HomePage = () => {
@@ -15,8 +15,8 @@ const HomePage = () => {
   const fetchData = async () => {
     try {
       const [productsRes, campaignsRes] = await Promise.all([
-        axios.get('/api/products'),
-        axios.get('/api/campaigns')
+        api.get('/products'),
+        api.get('/campaigns')
       ])
       
       // Defensive: Array kontrolü

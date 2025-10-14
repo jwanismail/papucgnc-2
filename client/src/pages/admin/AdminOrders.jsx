@@ -11,8 +11,9 @@ import {
   Phone,
   Mail
 } from 'lucide-react'
-import axios from 'axios'
+import api from '../../utils/api'
 import AdminAuth from '../../components/admin/AdminAuth'
+import { buildAssetUrl } from '../../utils/api'
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([])
@@ -27,14 +28,14 @@ const AdminOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const url = filter === 'all' ? '/api/orders' : `/api/orders?status=${filter}`
-      const response = await axios.get(url)
+      const url = filter === 'all' ? '/orders' : `/orders?status=${filter}`
+      const response = await api.get(url)
       const ordersData = Array.isArray(response.data?.orders) ? response.data.orders : []
       setOrders(ordersData)
       
       // Bekleyen sipariş sayısını al
       if (filter === 'all') {
-        const pendingResponse = await axios.get('/api/orders?status=pending')
+        const pendingResponse = await api.get('/orders?status=pending')
         const pendingData = Array.isArray(pendingResponse.data?.orders) ? pendingResponse.data.orders : []
         setPendingCount(pendingData.length)
       }
@@ -48,7 +49,7 @@ const AdminOrders = () => {
 
   const updateOrderStatus = async (orderId, status) => {
     try {
-      await axios.put(`/api/orders/${orderId}/status`, { status })
+      await api.put(`/orders/${orderId}/status`, { status })
       fetchOrders()
       setSelectedOrder(null)
       alert('Sipariş durumu güncellendi!')
@@ -300,7 +301,7 @@ const AdminOrders = () => {
                         <div className="w-16 h-16 bg-neutral-200 rounded-lg overflow-hidden flex-shrink-0">
                           {displayImage ? (
                             <img
-                              src={`http://localhost:5000${displayImage}`}
+                              src={buildAssetUrl(displayImage)}
                               alt={item.name}
                               className="w-full h-full object-cover"
                             />

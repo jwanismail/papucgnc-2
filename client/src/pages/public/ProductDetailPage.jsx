@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Package, Tag, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
-import axios from 'axios'
+import api, { buildAssetUrl } from '../../utils/api'
 import useCartStore from '../../store/cartStore'
 
 const ProductDetailPage = () => {
@@ -47,7 +47,7 @@ const ProductDetailPage = () => {
 
   const fetchProduct = async () => {
     try {
-      const response = await axios.get(`/api/products/${id}`)
+      const response = await api.get(`/products/${id}`)
       setProduct(response.data || null)
     } catch (error) {
       console.error('Ürün yüklenirken hata:', error)
@@ -201,7 +201,7 @@ const ProductDetailPage = () => {
                     onTouchEnd={onTouchEnd}
                   >
                     <img
-                      src={`http://localhost:5000${images[currentImageIndex]}`}
+                      src={buildAssetUrl(images[currentImageIndex])}
                       alt={`${product.name} ${currentImageIndex + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -259,7 +259,7 @@ const ProductDetailPage = () => {
                     onClick={() => setCurrentImageIndex(index)}
                   >
                     <img
-                      src={`http://localhost:5000${image}`}
+                      src={buildAssetUrl(image)}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-20 object-cover"
                     />
@@ -335,7 +335,7 @@ const ProductDetailPage = () => {
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-gray-200">
                     {product.images && product.images.length > 0 ? (
                       <img
-                        src={`http://localhost:5000${product.images[0]}`}
+                        src={buildAssetUrl(product.images[0])}
                         alt="Orijinal"
                         className="w-full h-full object-cover"
                       />
@@ -367,7 +367,7 @@ const ProductDetailPage = () => {
                     >
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-gray-200">
                         <img
-                          src={`http://localhost:5000${color.images[0]}`}
+                          src={buildAssetUrl(color.images[0])}
                           alt={color.name}
                           className="w-full h-full object-cover"
                         />
@@ -499,7 +499,7 @@ const ProductDetailPage = () => {
                   <>
                     {/* Ana Resim */}
                     <img
-                      src={`http://localhost:5000${images[currentImageIndex]}`}
+                      src={buildAssetUrl(images[currentImageIndex])}
                       alt={`${product.name} ${currentImageIndex + 1}`}
                       className="max-w-full max-h-[80vh] object-contain"
                     />
@@ -551,7 +551,7 @@ const ProductDetailPage = () => {
                       }`}
                     >
                       <img
-                        src={`http://localhost:5000${image}`}
+                        src={buildAssetUrl(image)}
                         alt={`Thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
                       />

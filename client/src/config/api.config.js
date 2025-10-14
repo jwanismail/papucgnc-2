@@ -6,7 +6,7 @@ const API_CONFIG = {
   },
   // Production - Railway backend
   production: {
-    baseURL: 'https://papucgnc-2-production.up.railway.app/api'
+    baseURL: 'https://papucgnc-servr-production.up.railway.app/api'
   }
 }
 

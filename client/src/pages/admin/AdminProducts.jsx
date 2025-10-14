@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Filter, X } from 'lucide-react'
-import axios from 'axios'
+import api from '../../utils/api'
 import ProductCard from '../../components/admin/ProductCard'
 import ProductForm from '../../components/admin/ProductForm'
 import AdminAuth from '../../components/admin/AdminAuth'
@@ -42,7 +42,7 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/api/products')
+      const response = await api.get('/products')
       setProducts(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Ürünler yüklenirken hata:', error)
@@ -54,7 +54,7 @@ const AdminProducts = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const response = await axios.get('/api/campaigns')
+      const response = await api.get('/campaigns')
       setCampaigns(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Kampanyalar yüklenirken hata:', error)
@@ -104,11 +104,11 @@ const AdminProducts = () => {
       }
 
       if (editingProduct) {
-        await axios.put(`/api/products/${editingProduct.id}`, data, {
+        await api.put(`/products/${editingProduct.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
       } else {
-        await axios.post('/api/products', data, {
+        await api.post('/products', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
       }
@@ -146,7 +146,7 @@ const AdminProducts = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
       try {
-        await axios.delete(`/api/products/${id}`)
+        await api.delete(`/products/${id}`)
         fetchProducts()
       } catch (error) {
         console.error('Ürün silinirken hata:', error)

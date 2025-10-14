@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2 } from 'lucide-react'
-import axios from 'axios'
+import api from '../../utils/api'
 import AdminAuth from '../../components/admin/AdminAuth'
 
 const AdminCampaigns = () => {
@@ -20,7 +20,7 @@ const AdminCampaigns = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const response = await axios.get('/api/campaigns')
+      const response = await api.get('/campaigns')
       setCampaigns(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Kampanyalar yüklenirken hata:', error)
@@ -32,9 +32,9 @@ const AdminCampaigns = () => {
     e.preventDefault()
     try {
       if (editingCampaign) {
-        await axios.put(`/api/campaigns/${editingCampaign.id}`, formData)
+        await api.put(`/campaigns/${editingCampaign.id}`, formData)
       } else {
-        await axios.post('/api/campaigns', formData)
+        await api.post('/campaigns', formData)
       }
       fetchCampaigns()
       handleCloseForm()
@@ -58,7 +58,7 @@ const AdminCampaigns = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu kampanyayı silmek istediğinize emin misiniz?')) {
       try {
-        await axios.delete(`/api/campaigns/${id}`)
+        await api.delete(`/campaigns/${id}`)
         fetchCampaigns()
       } catch (error) {
         console.error('Kampanya silinirken hata:', error)

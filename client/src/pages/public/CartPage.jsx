@@ -12,6 +12,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import useCartStore from '../../store/cartStore'
+import { buildAssetUrl } from '../../utils/api'
 
 const CartPage = () => {
   const { 
@@ -161,7 +162,7 @@ const CartPage = () => {
                           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg overflow-hidden">
                             {displayImage ? (
                               <img
-                                src={`http://localhost:5000${displayImage}`}
+                                src={buildAssetUrl(displayImage)}
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                               />

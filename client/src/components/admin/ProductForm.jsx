@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Upload, ImagePlus, Trash2, Plus } from 'lucide-react'
+import { buildAssetUrl } from '../../utils/api'
 
 const ProductForm = ({ product, campaigns, onSubmit, onCancel }) => {
   const SHOE_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44']
@@ -46,17 +47,17 @@ const ProductForm = ({ product, campaigns, onSubmit, onCancel }) => {
       const existingImages = []
       if (product.images && product.images.length > 0) {
         product.images.forEach(img => {
-          existingImages.push(`http://localhost:5000${img}`)
+          existingImages.push(buildAssetUrl(img))
         })
       } else if (product.image) {
-        existingImages.push(`http://localhost:5000${product.image}`)
+        existingImages.push(buildAssetUrl(product.image))
       }
       setImagePreviews(existingImages)
       
       // Renk preview'larını hazırla
       const colorPreviewsData = existingColorOptions.map(color => ({
         name: color.name,
-        previews: color.images?.map(img => `http://localhost:5000${img}`) || []
+        previews: color.images?.map(img => buildAssetUrl(img)) || []
       }))
       setColorPreviews(colorPreviewsData)
     }

@@ -1,4 +1,5 @@
 import { Edit, Trash2, Package, AlertTriangle } from 'lucide-react'
+import { buildAssetUrl } from '../../utils/api'
 
 const ProductCard = ({ product, onEdit, onDelete }) => {
   // Numara stoklarını kontrol et
@@ -21,7 +22,7 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
         {product.images && product.images.length > 0 ? (
           <div className="relative w-full h-full">
             <img
-              src={`http://localhost:5000${product.images[0]}`}
+              src={buildAssetUrl(product.images[0])}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -33,7 +34,7 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
           </div>
         ) : product.image ? (
           <img
-            src={`http://localhost:5000${product.image}`}
+            src={buildAssetUrl(product.image)}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

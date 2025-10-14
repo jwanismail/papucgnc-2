@@ -7,11 +7,6 @@ import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
-// Environment variable fallback
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'file:./dev.db';
-}
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 

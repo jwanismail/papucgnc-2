@@ -9,6 +9,12 @@ const api = axios.create({
   withCredentials: false
 })
 
+export const buildAssetUrl = (path) => {
+  if (!path) return ''
+  const origin = apiConfig.baseURL.replace(/\/$/, '').replace(/\/api$/, '')
+  return `${origin}${path}`
+}
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
