@@ -21,9 +21,20 @@ const HomePage = () => {
         api.get('/campaigns')
       ])
       
+      console.log('🏠 HomePage API Response:', {
+        productsRes: productsRes.data,
+        productsIsArray: Array.isArray(productsRes.data),
+        campaignsRes: campaignsRes.data
+      })
+      
       // Defensive: Array kontrolü
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : []
       const campaignsData = Array.isArray(campaignsRes.data) ? campaignsRes.data : []
+      
+      console.log('🏠 HomePage Parsed Data:', {
+        productsCount: productsData.length,
+        campaignsCount: campaignsData.length
+      })
       
       setProducts(productsData.slice(0, 8)) // Son 8 ürün
       setCampaigns(campaignsData.filter(c => c.isActive))

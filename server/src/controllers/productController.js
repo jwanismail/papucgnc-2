@@ -14,15 +14,40 @@ export const getAllProducts = async (req, res) => {
       }
     });
     
-    // Her ürün için images ve colorOptions array'ini parse et
-    const productsWithParsedImages = products.map(product => ({
-      ...product,
-      images: product.images ? JSON.parse(product.images) : [],
-      colorOptions: product.colorOptions ? JSON.parse(product.colorOptions) : []
-    }));
+    console.log(`📦 ${products.length} ürün veritabanından getirildi`);
     
+    // Her ürün için images ve colorOptions array'ini parse et
+    const productsWithParsedImages = products.map(product => {
+      let parsedImages = [];
+      let parsedColorOptions = [];
+      
+      // Images parse et
+      try {
+        parsedImages = product.images ? JSON.parse(product.images) : [];
+      } catch (e) {
+        console.error('Images parse hatası:', e, product.images);
+        parsedImages = [];
+      }
+      
+      // ColorOptions parse et
+      try {
+        parsedColorOptions = product.colorOptions ? JSON.parse(product.colorOptions) : [];
+      } catch (e) {
+        console.error('ColorOptions parse hatası:', e, product.colorOptions);
+        parsedColorOptions = [];
+      }
+      
+      return {
+        ...product,
+        images: parsedImages,
+        colorOptions: parsedColorOptions
+      };
+    });
+    
+    console.log(`✅ ${productsWithParsedImages.length} ürün başarıyla parse edildi`);
     res.json(productsWithParsedImages);
   } catch (error) {
+    console.error('❌ getAllProducts hatası:', error);
     res.status(500).json({ error: 'Ürünler getirilirken hata oluştu', message: error.message });
   }
 };

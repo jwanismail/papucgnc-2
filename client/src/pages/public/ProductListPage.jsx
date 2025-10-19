@@ -24,10 +24,23 @@ const ProductListPage = () => {
         api.get('/products/featured')
       ])
       
+      console.log('🔍 API Response Debug:', {
+        productsRes: productsRes.data,
+        productsIsArray: Array.isArray(productsRes.data),
+        campaignsRes: campaignsRes.data,
+        featuredRes: featuredRes.data
+      })
+      
       // Defensive: Array kontrolü
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : []
       const campaignsData = Array.isArray(campaignsRes.data) ? campaignsRes.data : []
       const featuredData = Array.isArray(featuredRes.data) ? featuredRes.data : []
+      
+      console.log('📦 Parsed Data:', {
+        productsCount: productsData.length,
+        campaignsCount: campaignsData.length,
+        featuredCount: featuredData.length
+      })
       
       setProducts(productsData)
       setCampaigns(campaignsData)
