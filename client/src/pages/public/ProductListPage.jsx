@@ -18,35 +18,43 @@ const ProductListPage = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, campaignsRes, featuredRes] = await Promise.all([
+      // Ana veriler - bunlar zorunlu
+      const [productsRes, campaignsRes] = await Promise.all([
         api.get('/products'),
-        api.get('/campaigns'),
-        api.get('/products/featured')
+        api.get('/campaigns')
       ])
       
       console.log('🔍 API Response Debug:', {
         productsRes: productsRes.data,
         productsIsArray: Array.isArray(productsRes.data),
-        campaignsRes: campaignsRes.data,
-        featuredRes: featuredRes.data
+        campaignsRes: campaignsRes.data
       })
       
       // Defensive: Array kontrolü
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : []
       const campaignsData = Array.isArray(campaignsRes.data) ? campaignsRes.data : []
-      const featuredData = Array.isArray(featuredRes.data) ? featuredRes.data : []
-      
-      console.log('📦 Parsed Data:', {
-        productsCount: productsData.length,
-        campaignsCount: campaignsData.length,
-        featuredCount: featuredData.length
-      })
       
       setProducts(productsData)
       setCampaigns(campaignsData)
-      setFeaturedProducts(featuredData)
+      
+      console.log('📦 Parsed Data:', {
+        productsCount: productsData.length,
+        campaignsCount: campaignsData.length
+      })
+      
+      // Featured products optional - ayrı olarak yükle
+      try {
+        const featuredRes = await api.get('/products/featured')
+        const featuredData = Array.isArray(featuredRes.data) ? featuredRes.data : []
+        setFeaturedProducts(featuredData)
+        console.log('⭐ Featured Products:', featuredData.length)
+      } catch (featuredError) {
+        console.warn('Featured products yüklenemedi:', featuredError.message)
+        setFeaturedProducts([])
+      }
+      
     } catch (error) {
-      console.error('Veri yüklenirken hata:', error)
+      console.error('Ana veri yüklenirken hata:', error)
       // Hata durumunda boş array kullan
       setProducts([])
       setCampaigns([])
