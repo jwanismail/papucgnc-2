@@ -4,6 +4,7 @@ import {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
+  updateBulkOrderStatus,
   deleteOrder
 } from '../controllers/orderController.js';
 
@@ -20,6 +21,9 @@ router.get('/:id', getOrderById);
 
 // Sipariş durumunu güncelle
 router.put('/:id/status', updateOrderStatus);
+
+// Toplu sipariş durumunu güncelle
+router.put('/bulk/status', updateBulkOrderStatus);
 
 // Sipariş sil
 router.delete('/:id', deleteOrder);

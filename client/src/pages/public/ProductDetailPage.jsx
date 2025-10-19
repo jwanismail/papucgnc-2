@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Package, Tag, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
 import api, { buildAssetUrl } from '../../utils/api'
 import useCartStore from '../../store/cartStore'
+import ProductCard from '../../components/product/ProductCard'
 
 const ProductDetailPage = () => {
   const { id } = useParams()
@@ -16,9 +17,13 @@ const ProductDetailPage = () => {
   const [selectedColorIndex, setSelectedColorIndex] = useState(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const addItem = useCartStore((state) => state.addItem)
+  const [showAddedModal, setShowAddedModal] = useState(false)
+  const [relatedProducts, setRelatedProducts] = useState([])
+  const [relatedLoading, setRelatedLoading] = useState(true)
 
   useEffect(() => {
     fetchProduct()
+    fetchRelatedProducts()
   }, [id])
 
   // Keyboard navigation
@@ -57,6 +62,26 @@ const ProductDetailPage = () => {
     }
   }
 
+  const fetchRelatedProducts = async () => {
+    try {
+      setRelatedLoading(true)
+      const response = await api.get('/products')
+      const allProducts = Array.isArray(response.data) ? response.data : []
+      
+      // Mevcut ürünü hariç tut ve ilk 8 ürünü al
+      const filteredProducts = allProducts
+        .filter(p => p.id !== parseInt(id))
+        .slice(0, 8)
+      
+      setRelatedProducts(filteredProducts)
+    } catch (error) {
+      console.error('İlgili ürünler yüklenirken hata:', error)
+      setRelatedProducts([])
+    } finally {
+      setRelatedLoading(false)
+    }
+  }
+
   const handleAddToCart = () => {
     if (product) {
       // Numara kontrolü - sadece sizeStock varsa
@@ -77,6 +102,9 @@ const ProductDetailPage = () => {
       for (let i = 0; i < quantity; i++) {
         addItem(product, selectedColorData, selectedSize)
       }
+
+      // Başarı modalını göster
+      setShowAddedModal(true)
     }
   }
 
@@ -298,18 +326,24 @@ const ProductDetailPage = () => {
           )}
 
           <div className="mb-8">
-            <p className="text-5xl font-bold text-primary-600 mb-2">
-              ₺{product.price.toFixed(2)}
-            </p>
-            <p className="text-gray-600">
-              {product.stock > 0 ? (
-                <span className="text-green-600 font-medium">
-                  Stokta {product.stock} adet mevcut
-                </span>
-              ) : (
-                <span className="text-red-600 font-medium">Stokta yok</span>
-              )}
-            </p>
+            <div className="flex items-baseline gap-3 mb-2">
+              <span className="line-through text-neutral-400 text-base">₺699.00</span>
+              <p className="text-5xl font-bold text-primary-600">
+                ₺{product.price.toFixed(2)}
+              </p>
+            </div>
+            {product.stock > 0 ? (
+              <div className="text-sm">
+                <p className={`font-medium ${product.stock <= 10 ? 'text-red-600' : 'text-green-600'}`}>
+                  Sınırlı stokta mevcuttur
+                </p>
+                <p className="text-gray-600 mt-1">
+                  Stoklar tükenmeden acele edin!
+                </p>
+              </div>
+            ) : (
+              <p className="text-red-600 font-medium">Stokta yok</p>
+            )}
           </div>
 
           {/* Renk Seçenekleri */}
@@ -560,6 +594,127 @@ const ProductDetailPage = () => {
                 </div>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Diğer Ürünlerimiz Section */}
+      {relatedProducts.length > 0 && (
+        <section className="mt-16 lg:mt-24 py-12 lg:py-20 bg-gradient-to-b from-white via-neutral-50/30 to-white border-t border-neutral-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Section Header */}
+            <div className="text-center mb-12 lg:mb-16">
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {/* Badge */}
+                <div className="inline-flex items-center justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary-200/30 blur-sm rounded-full"></div>
+                    <p className="relative text-xs sm:text-sm text-primary-700 uppercase tracking-wider font-medium bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-primary-200">
+                      Koleksiyonumuzdan
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Title */}
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-light tracking-tight text-neutral-900 leading-tight">
+                  Diğer Ürünlerimiz
+                </h2>
+                
+                {/* Subtitle */}
+                <p className="text-base sm:text-lg lg:text-xl text-neutral-600 font-light leading-relaxed max-w-2xl mx-auto px-4">
+                  Beğeneceğinizi düşündüğümüz ürünler
+                </p>
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            {relatedLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="text-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto"></div>
+                  </div>
+                  <p className="text-sm text-neutral-600 uppercase tracking-wider font-medium">Yükleniyor</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Desktop/Tablet Grid */}
+                <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8">
+                  {relatedProducts.slice(0, 8).map((relatedProduct, index) => (
+                    <div 
+                      key={relatedProduct.id}
+                      className="transform transition-all duration-700 hover:scale-105"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <ProductCard product={relatedProduct} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile Horizontal Scroll */}
+                <div className="sm:hidden">
+                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
+                    {relatedProducts.slice(0, 6).map((relatedProduct, index) => (
+                      <div 
+                        key={relatedProduct.id}
+                        className="flex-shrink-0 w-48 transform transition-all duration-700"
+                        style={{ animationDelay: `${index * 150}ms` }}
+                      >
+                        <ProductCard product={relatedProduct} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* View All Button */}
+                {relatedProducts.length > 0 && (
+                  <div className="text-center mt-8 lg:mt-12">
+                    <Link 
+                      to="/products" 
+                      className="group relative inline-flex items-center justify-center overflow-hidden bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 lg:px-10 py-3 lg:py-4 text-sm lg:text-base uppercase tracking-wider transition-all duration-500 transform hover:scale-105 hover:shadow-2xl rounded-lg"
+                    >
+                      <span className="relative z-10 flex items-center gap-3">
+                        Tüm Koleksiyonu Görüntüle
+                        <div className="w-2 h-2 bg-white rounded-full group-hover:translate-x-1 transition-transform duration-300"></div>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 to-neutral-900 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Sepete Eklendi Modal */}
+      {showAddedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAddedModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 z-10">
+            <div className="text-center space-y-3">
+              <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-green-600 text-xl">✓</span>
+              </div>
+              <h3 className="text-lg font-semibold text-neutral-900">Siparişiniz sepete eklendi</h3>
+              <p className="text-sm text-neutral-600">Alışverişe devam edebilir veya sepetinize gidebilirsiniz.</p>
+            </div>
+            <div className="mt-6 space-y-2">
+              <button
+                onClick={() => setShowAddedModal(false)}
+                className="w-full btn-secondary"
+              >
+                Alışverişe Devam Et
+              </button>
+              <Link
+                to="/cart"
+                className="w-full btn-primary inline-flex items-center justify-center"
+                onClick={() => setShowAddedModal(false)}
+              >
+                Sepete Git
+              </Link>
+            </div>
           </div>
         </div>
       )}

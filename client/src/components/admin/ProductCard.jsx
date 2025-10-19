@@ -1,7 +1,7 @@
-import { Edit, Trash2, Package, AlertTriangle } from 'lucide-react'
+import { Edit, Trash2, Package, AlertTriangle, Star } from 'lucide-react'
 import { buildAssetUrl } from '../../utils/api'
 
-const ProductCard = ({ product, onEdit, onDelete }) => {
+const ProductCard = ({ product, onEdit, onDelete, onAddToFeatured, isFeatured = false }) => {
   // Numara stoklarını kontrol et
   const sizeStock = product.sizeStock 
     ? (typeof product.sizeStock === 'string' ? JSON.parse(product.sizeStock) : product.sizeStock)
@@ -44,11 +44,19 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
           </div>
         )}
         
-        {product.campaign && (
-          <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            Kampanyalı
-          </span>
-        )}
+        <div className="absolute top-2 right-2 flex flex-col space-y-1">
+          {product.featuredOrder && (
+            <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
+              <Star className="w-3 h-3" />
+              <span>#{product.featuredOrder}</span>
+            </span>
+          )}
+          {product.campaign && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              Kampanyalı
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Product Info */}
@@ -127,21 +135,44 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-200">
-        <button
-          onClick={() => onEdit(product)}
-          className="flex-1 flex items-center justify-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          <Edit className="w-4 h-4" />
-          <span>Düzenle</span>
-        </button>
-        <button
-          onClick={() => onDelete(product.id)}
-          className="flex-1 flex items-center justify-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>Sil</span>
-        </button>
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        {/* Öne Çıkarma Butonu */}
+        {onAddToFeatured && (
+          <div className="mb-3">
+            <button
+              onClick={() => onAddToFeatured(product)}
+              disabled={isFeatured}
+              className={`w-full flex items-center justify-center space-x-2 font-medium px-4 py-2 rounded-lg transition-colors ${
+                isFeatured || product.featuredOrder
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-yellow-50 hover:bg-yellow-100 text-yellow-600'
+              }`}
+            >
+              <Star className={`w-4 h-4 ${!isFeatured && !product.featuredOrder ? 'fill-current' : ''}`} />
+              <span>
+                {isFeatured || product.featuredOrder ? 'Zaten Öne Çıkarılmış' : 'Öne Çıkar'}
+              </span>
+            </button>
+          </div>
+        )}
+        
+        {/* Ana Butonlar */}
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onEdit(product)}
+            className="flex-1 flex items-center justify-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            <Edit className="w-4 h-4" />
+            <span>Düzenle</span>
+          </button>
+          <button
+            onClick={() => onDelete(product.id)}
+            className="flex-1 flex items-center justify-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Sil</span>
+          </button>
+        </div>
       </div>
     </div>
   )

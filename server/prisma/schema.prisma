@@ -10,21 +10,23 @@ datasource db {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  price       Float
-  image       String
-  images      String?  // JSON string olarak çoklu resimler
-  stock       Int      @default(0)
-  sizeStock   String?  // JSON string: { "36": 10, "37": 15, ... }
-  campaignId  String?
-  campaign    Campaign? @relation(fields: [campaignId], references: [id])
-  colorOptions String? // JSON string: [{ name: "Siyah", images: ["/uploads/..."] }]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Float
+  image         String
+  images        String?  // JSON string olarak çoklu resimler
+  stock         Int      @default(0)
+  sizeStock     String?  // JSON string: { "36": 10, "37": 15, ... }
+  campaignId    String?
+  campaign      Campaign? @relation(fields: [campaignId], references: [id])
+  colorOptions  String?  // JSON string: [{ name: "Siyah", images: ["/uploads/..."] }]
+  featuredOrder Int?     // Öne çıkarılma sırası (null = öne çıkarılmamış)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([campaignId])
+  @@index([featuredOrder])
 }
 
 model Campaign {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Truck, CreditCard, Banknote, Building2 } from 'lucide-react'
 import useCartStore from '../../store/cartStore'
+import api from '../../utils/api'
 
 const CheckoutPage = () => {
   const { items, getTotalItems, getTotalPrice, getCampaignDiscount, clearCart } = useCartStore()
@@ -22,6 +23,8 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [orderNumber, setOrderNumber] = useState('')
   
   // Kargo firması sabit: Sürat Kargo
   const shippingMethod = 'Sürat Kargo'
@@ -58,7 +61,7 @@ const CheckoutPage = () => {
       const orderData = {
         ...formData,
         items: items,
-        totalAmount: parseFloat(totalWithTax),
+        totalAmount: parseFloat(finalTotal),
         campaignDiscount: getCampaignDiscount(),
         shippingCost: shippingCost,
         paymentMethod: paymentMethod,
@@ -66,20 +69,17 @@ const CheckoutPage = () => {
       }
 
       // API'ye sipariş gönder
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        alert(`Siparişiniz başarıyla oluşturuldu! 🎉\nSipariş No: ${result.orderNumber}`)
+      const response = await api.post('/orders', orderData)
+      
+      if (response.data?.success) {
+        setOrderNumber(response.data.order.orderNumber)
+        setShowSuccessToast(true)
         clearCart()
-        // Ana sayfaya yönlendir
-        window.location.href = '/'
+        
+        // 3 saniye sonra ana sayfaya yönlendir
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 3000)
       } else {
         throw new Error('Sipariş oluşturulurken hata oluştu')
       }
@@ -91,11 +91,28 @@ const CheckoutPage = () => {
     }
   }
 
-  const totalWithTax = (getTotalPrice() * 1.18).toFixed(2)
-  const shippingCost = getTotalPrice() >= 150 ? 0 : 50
+  // KDV kaldırıldı, toplam = indirimli ara toplam + kargo
+  const shippingCost = 100
+  const discountedSubtotal = getTotalPrice() // kampanya indirimi uygulanmış ara toplam
+  const finalTotal = (discountedSubtotal + shippingCost).toFixed(2)
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
+      {/* Success Toast Notification */}
+      {showSuccessToast && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down">
+          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-md">
+            <div className="flex-shrink-0">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg">Siparişiniz Başarıyla Oluşturuldu! 🎉</h3>
+              <p className="text-sm opacity-90">Sipariş No: {orderNumber}</p>
+              <p className="text-xs opacity-75 mt-1">Ana sayfaya yönlendiriliyorsunuz...</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -109,7 +126,7 @@ const CheckoutPage = () => {
           
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-900 mb-2">
-              Sepetim ({getTotalItems()} Ürün {totalWithTax} TL)
+              Sepetim ({getTotalItems()} Ürün ₺{finalTotal})
             </h1>
           </div>
         </div>
@@ -336,12 +353,12 @@ const CheckoutPage = () => {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">Kargo</span>
-                  <span>{shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost}`}</span>
+                  <span>₺{shippingCost}</span>
                 </div>
                 <div className="border-t border-neutral-200 pt-3">
                   <div className="flex justify-between">
                     <span className="font-medium text-neutral-900">Toplam</span>
-                    <span className="font-medium text-neutral-900">₺{totalWithTax}</span>
+                    <span className="font-medium text-neutral-900">₺{finalTotal}</span>
                   </div>
                 </div>
               </div>

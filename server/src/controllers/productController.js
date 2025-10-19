@@ -260,3 +260,96 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
+// Öne çıkarılmış ürünleri getir (koleksiyon sayfası için)
+export const getFeaturedProducts = async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        featuredOrder: {
+          not: null
+        }
+      },
+      include: {
+        campaign: true
+      },
+      orderBy: {
+        featuredOrder: 'asc'
+      }
+    });
+    
+    // Her ürün için images ve colorOptions array'ini parse et
+    const productsWithParsedImages = products.map(product => ({
+      ...product,
+      images: product.images ? JSON.parse(product.images) : [],
+      colorOptions: product.colorOptions ? JSON.parse(product.colorOptions) : []
+    }));
+    
+    res.json(productsWithParsedImages);
+  } catch (error) {
+    res.status(500).json({ error: 'Öne çıkarılmış ürünler getirilirken hata oluştu', message: error.message });
+  }
+};
+
+// Ürün öne çıkarma sırasını güncelle
+export const updateFeaturedOrder = async (req, res) => {
+  try {
+    const { productId, featuredOrder } = req.body;
+    
+    if (!productId) {
+      return res.status(400).json({ error: 'Ürün ID gerekli' });
+    }
+
+    // featuredOrder null ise öne çıkarmayı kaldır
+    const orderValue = featuredOrder === null || featuredOrder === undefined ? null : parseInt(featuredOrder);
+    
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data: { featuredOrder: orderValue },
+      include: {
+        campaign: true
+      }
+    });
+    
+    res.json({
+      ...product,
+      images: product.images ? JSON.parse(product.images) : [],
+      colorOptions: product.colorOptions ? JSON.parse(product.colorOptions) : []
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Öne çıkarma sırası güncellenirken hata oluştu', message: error.message });
+  }
+};
+
+// Tüm öne çıkarma sıralarını toplu güncelle
+export const updateFeaturedOrders = async (req, res) => {
+  try {
+    const { featuredProducts } = req.body; // [{ id: 'xxx', featuredOrder: 1 }, ...]
+    
+    if (!Array.isArray(featuredProducts)) {
+      return res.status(400).json({ error: 'Geçersiz veri formatı' });
+    }
+
+    // Transaction kullanarak toplu güncelleme
+    await prisma.$transaction(async (tx) => {
+      // Önce tüm ürünlerin featuredOrder'ını null yap
+      await tx.product.updateMany({
+        data: { featuredOrder: null }
+      });
+      
+      // Sonra sadece belirtilen ürünleri güncelle
+      for (const item of featuredProducts) {
+        if (item.id && item.featuredOrder !== null && item.featuredOrder !== undefined) {
+          await tx.product.update({
+            where: { id: item.id },
+            data: { featuredOrder: parseInt(item.featuredOrder) }
+          });
+        }
+      }
+    });
+    
+    res.json({ message: 'Öne çıkarma sıraları başarıyla güncellendi' });
+  } catch (error) {
+    res.status(500).json({ error: 'Öne çıkarma sıraları güncellenirken hata oluştu', message: error.message });
+  }
+};
+

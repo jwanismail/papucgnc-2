@@ -9,7 +9,9 @@ import {
   DollarSign,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  CheckSquare,
+  Square
 } from 'lucide-react'
 import api from '../../utils/api'
 import AdminAuth from '../../components/admin/AdminAuth'
@@ -21,9 +23,18 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [pendingCount, setPendingCount] = useState(0)
+  
+  // Toplu işlem için state'ler
+  const [selectedOrders, setSelectedOrders] = useState([])
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   useEffect(() => {
     fetchOrders()
+  }, [filter])
+
+  // Filter değiştiğinde seçili siparişleri temizle
+  useEffect(() => {
+    setSelectedOrders([])
   }, [filter])
 
   const fetchOrders = async () => {
@@ -58,6 +69,66 @@ const AdminOrders = () => {
       alert('Sipariş güncellenirken hata oluştu!')
     }
   }
+
+  // Toplu sipariş durumu güncelleme
+  const updateBulkOrderStatus = async (status) => {
+    if (selectedOrders.length === 0) {
+      alert('Lütfen en az bir sipariş seçin!')
+      return
+    }
+
+    if (selectedOrders.length > 10) {
+      alert('En fazla 10 sipariş aynı anda seçebilirsiniz!')
+      return
+    }
+
+    setBulkLoading(true)
+    try {
+      const response = await api.put('/orders/bulk/status', {
+        orderIds: selectedOrders,
+        status: status
+      })
+      
+      alert(response.data.message)
+      setSelectedOrders([])
+      fetchOrders()
+    } catch (error) {
+      console.error('Toplu sipariş güncelleme hatası:', error)
+      alert('Toplu güncelleme sırasında hata oluştu!')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  // Sipariş seçimi
+  const toggleOrderSelection = (orderId) => {
+    setSelectedOrders(prev => {
+      if (prev.includes(orderId)) {
+        return prev.filter(id => id !== orderId)
+      } else {
+        if (prev.length >= 10) {
+          alert('En fazla 10 sipariş seçebilirsiniz!')
+          return prev
+        }
+        return [...prev, orderId]
+      }
+    })
+  }
+
+  // Tümünü seç/seçimi kaldır
+  const toggleSelectAll = () => {
+    const currentPendingOrders = orders.filter(order => order.status === 'pending')
+    const pendingOrdersIds = currentPendingOrders.map(order => order.id)
+    
+    if (selectedOrders.length === pendingOrdersIds.length && pendingOrdersIds.length > 0) {
+      setSelectedOrders([])
+    } else {
+      setSelectedOrders(pendingOrdersIds.slice(0, 10))
+    }
+  }
+
+  // Sadece beklemede olan siparişleri filtrele
+  const pendingOrders = orders.filter(order => order.status === 'pending')
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -150,6 +221,59 @@ const AdminOrders = () => {
         </div>
       </div>
 
+      {/* Toplu İşlem Section */}
+      {pendingOrders.length > 0 && (
+        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center space-x-2 text-sm font-medium text-yellow-700 hover:text-yellow-800"
+                >
+                  {selectedOrders.length === pendingOrders.length && pendingOrders.length > 0 ? (
+                    <CheckSquare className="w-5 h-5" />
+                  ) : (
+                    <Square className="w-5 h-5" />
+                  )}
+                  <span>
+                    Tümünü Seç ({selectedOrders.length}/{pendingOrders.length})
+                  </span>
+                </button>
+              </div>
+              
+              {selectedOrders.length > 0 && (
+                <div className="text-sm text-yellow-700 font-medium">
+                  {selectedOrders.length} sipariş seçildi
+                </div>
+              )}
+            </div>
+
+            {selectedOrders.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => updateBulkOrderStatus('confirmed')}
+                  disabled={bulkLoading}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>
+                    {bulkLoading ? 'İşleniyor...' : `${selectedOrders.length} Siparişi Onayla`}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedOrders([])}
+                  className="w-full sm:w-auto px-3 py-2 text-sm text-neutral-600 hover:text-neutral-800 border border-neutral-300 rounded-lg hover:bg-white transition-colors"
+                >
+                  Seçimi Temizle
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Orders List */}
       {orders.length === 0 ? (
         <div className="text-center py-12">
@@ -159,39 +283,57 @@ const AdminOrders = () => {
       ) : (
         <div className="space-y-4">
           {orders.map(order => (
-            <div key={order.id} className="bg-white rounded-lg border border-neutral-200 p-6">
+            <div key={order.id} className={`bg-white rounded-lg border border-neutral-200 p-6 ${selectedOrders.includes(order.id) ? 'ring-2 ring-yellow-400 bg-yellow-50' : ''}`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                {/* Order Info */}
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4 mb-3">
-                    <h3 className="text-lg font-medium text-neutral-900">
-                      {order.orderNumber}
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(order.status)}
-                      <span className="text-sm font-medium text-neutral-700">
-                        {getStatusText(order.status)}
-                      </span>
+                <div className="flex items-start space-x-4 flex-1">
+                  {/* Checkbox for bulk selection */}
+                  {order.status === 'pending' && (
+                    <div className="flex items-center pt-1">
+                      <button
+                        onClick={() => toggleOrderSelection(order.id)}
+                        className="flex items-center justify-center w-5 h-5"
+                      >
+                        {selectedOrders.includes(order.id) ? (
+                          <CheckSquare className="w-5 h-5 text-yellow-600" />
+                        ) : (
+                          <Square className="w-5 h-5 text-neutral-400 hover:text-yellow-600" />
+                        )}
+                      </button>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-neutral-600">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4" />
-                      <span>₺{order.totalAmount.toFixed(2)}</span>
+                  )}
+
+                  {/* Order Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-4 mb-3">
+                      <h3 className="text-lg font-medium text-neutral-900">
+                        {order.orderNumber}
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(order.status)}
+                        <span className="text-sm font-medium text-neutral-700">
+                          {getStatusText(order.status)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{order.city}, {order.district}</span>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-neutral-600">
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span>₺{order.totalAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{order.city}, {order.district}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Phone className="w-4 h-4" />
+                        <span>{order.phone}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4" />
-                      <span>{order.phone}</span>
+                    
+                    <div className="mt-2 text-sm text-neutral-500">
+                      {new Date(order.createdAt).toLocaleDateString('tr-TR')} - {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
                     </div>
-                  </div>
-                  
-                  <div className="mt-2 text-sm text-neutral-500">
-                    {new Date(order.createdAt).toLocaleDateString('tr-TR')} - {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
                   </div>
                 </div>
 

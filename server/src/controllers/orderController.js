@@ -249,6 +249,125 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Toplu sipariş durumu güncelle
+export const updateBulkOrderStatus = async (req, res) => {
+  try {
+    const { orderIds, status, paymentStatus } = req.body;
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({
+        error: 'Geçersiz veri',
+        message: 'En az bir sipariş ID\'si gönderilmelidir'
+      });
+    }
+
+    if (orderIds.length > 10) {
+      return res.status(400).json({
+        error: 'Limit aşıldı',
+        message: 'En fazla 10 sipariş aynı anda güncellenebilir'
+      });
+    }
+
+    // Mevcut siparişleri kontrol et
+    const existingOrders = await prisma.order.findMany({
+      where: {
+        id: { in: orderIds }
+      }
+    });
+
+    if (existingOrders.length !== orderIds.length) {
+      return res.status(400).json({
+        error: 'Sipariş bulunamadı',
+        message: 'Bazı siparişler bulunamadı'
+      });
+    }
+
+    // Transaction kullanarak toplu güncelleme
+    const results = await prisma.$transaction(async (tx) => {
+      const updatedOrders = [];
+
+      for (const orderId of orderIds) {
+        const currentOrder = await tx.order.findUnique({ where: { id: orderId } });
+        
+        const updateData = {};
+        
+        if (status) {
+          updateData.status = status;
+          if (status === 'confirmed') {
+            updateData.confirmedAt = new Date();
+            
+            // Sipariş onaylandığında stokları azalt
+            const items = JSON.parse(currentOrder.items);
+            
+            for (const item of items) {
+              if (item.selectedSize) {
+                const product = await tx.product.findUnique({
+                  where: { id: item.id }
+                });
+                
+                if (product && product.sizeStock) {
+                  const sizeStock = typeof product.sizeStock === 'string' 
+                    ? JSON.parse(product.sizeStock) 
+                    : product.sizeStock;
+                  
+                  if (sizeStock[item.selectedSize] !== undefined) {
+                    sizeStock[item.selectedSize] = Math.max(0, sizeStock[item.selectedSize] - item.quantity);
+                    
+                    const totalStock = Object.values(sizeStock).reduce((sum, val) => sum + val, 0);
+                    
+                    await tx.product.update({
+                      where: { id: item.id },
+                      data: {
+                        sizeStock: JSON.stringify(sizeStock),
+                        stock: totalStock
+                      }
+                    });
+                    
+                    console.log(`✅ Toplu stok azaltıldı: ${item.name} - Numara ${item.selectedSize} (${item.quantity} adet)`);
+                  }
+                }
+              }
+            }
+          } else if (status === 'shipped') {
+            updateData.shippedAt = new Date();
+          } else if (status === 'delivered') {
+            updateData.deliveredAt = new Date();
+          }
+        }
+        
+        if (paymentStatus) {
+          updateData.paymentStatus = paymentStatus;
+        }
+
+        const updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data: updateData
+        });
+
+        updatedOrders.push(updatedOrder);
+      }
+
+      return updatedOrders;
+    });
+
+    res.json({
+      success: true,
+      message: `${results.length} sipariş başarıyla güncellendi`,
+      updatedOrders: results.map(order => ({
+        ...order,
+        items: JSON.parse(order.items)
+      }))
+    });
+
+  } catch (error) {
+    console.error('Toplu sipariş güncelleme hatası:', error);
+    res.status(500).json({
+      error: 'Toplu sipariş güncelleme hatası',
+      message: error.message
+    });
+  }
+};
+
 // Sipariş sil
 export const deleteOrder = async (req, res) => {
   try {

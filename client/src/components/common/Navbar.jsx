@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import useCartStore from '../../store/cartStore'
 
 const Navbar = () => {
-  const getTotalItems = useCartStore((state) => state.getTotalItems)
-  const cartCount = getTotalItems()
+  const cartItems = useCartStore((state) => state.items)
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  const [bump, setBump] = useState(false)
+
+  useEffect(() => {
+    if (cartCount <= 0) return
+    setBump(true)
+    const t = setTimeout(() => setBump(false), 250)
+    return () => clearTimeout(t)
+  }, [cartCount])
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
@@ -50,8 +59,10 @@ const Navbar = () => {
           >
             <ShoppingCart className="w-6 h-6 group-hover:opacity-70 transition-opacity" />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-neutral-900 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {cartCount}
+              <span
+                className={`absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md transform transition-transform duration-200 ${bump ? 'scale-110' : 'scale-100'}`}
+              >
+                {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
           </Link>

@@ -1,15 +1,25 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import useCartStore from '../../store/cartStore'
 import { buildAssetUrl } from '../../utils/api'
 
 const ProductCard = ({ product }) => {
   const addItem = useCartStore((state) => state.addItem)
+  const [showSizeWarning, setShowSizeWarning] = useState(false)
 
   const handleAddToCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    addItem(product, null, null) // Renk ve numara seçeneği olmadan
+    // Ürün detayından numara seçilmeden eklemeyi engelle
+    setShowSizeWarning(true)
+    // İsteğe bağlı: kullanıcıyı ürün detay sayfasına yönlendirmek için link bırakıyoruz
   }
+
+  useEffect(() => {
+    if (!showSizeWarning) return
+    const t = setTimeout(() => setShowSizeWarning(false), 2500)
+    return () => clearTimeout(t)
+  }, [showSizeWarning])
 
   return (
     <Link to={`/products/${product.id}`}>
@@ -71,9 +81,12 @@ const ProductCard = ({ product }) => {
           )}
 
           <div className="pt-1">
-            <p className="text-base md:text-2xl font-light text-neutral-900">
-              ₺{product.price.toFixed(2)}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <span className="line-through text-neutral-400 text-xs md:text-sm">₺699.00</span>
+              <p className="text-base md:text-2xl font-light text-neutral-900">
+                ₺{product.price.toFixed(2)}
+              </p>
+            </div>
             {product.stock > 0 && product.stock <= 10 && (
               <p className="text-[10px] md:text-xs text-accent-600 font-medium mt-1 md:mt-2 uppercase tracking-wider">
                 Son {product.stock} ürün
@@ -90,6 +103,11 @@ const ProductCard = ({ product }) => {
         >
           Sepete Ekle
         </button>
+        {showSizeWarning && (
+          <div className="mt-2 text-[11px] md:text-xs text-red-600 font-medium uppercase tracking-wider">
+            Lütfen ürüne tıklayarak numara seçiniz
+          </div>
+        )}
       </div>
     </Link>
   )

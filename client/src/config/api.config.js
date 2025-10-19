@@ -2,7 +2,7 @@
 const API_CONFIG = {
   // Development - local backend
   development: {
-    baseURL: 'http://localhost:5000/api'
+    baseURL: 'https://papucgnc-servr-production.up.railway.app/api'
   },
   // Production - Railway backend
   production: {
@@ -12,6 +12,13 @@ const API_CONFIG = {
 
 const currentEnv = import.meta.env.MODE || 'development'
 
-export const apiConfig = API_CONFIG[currentEnv]
+// VITE_API_URL varsa onu kullan, yoksa ortam varsayılanını kullan
+const resolvedBaseURL = (
+  import.meta.env.VITE_API_URL || (API_CONFIG[currentEnv] && API_CONFIG[currentEnv].baseURL)
+)
+  ? (import.meta.env.VITE_API_URL || API_CONFIG[currentEnv].baseURL).replace(/\/$/, '')
+  : 'https://papucgnc-servr-production.up.railway.app/api'
+
+export const apiConfig = { baseURL: resolvedBaseURL }
 export default apiConfig
 

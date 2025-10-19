@@ -6,7 +6,10 @@ import {
   getProductById, 
   createProduct, 
   updateProduct, 
-  deleteProduct 
+  deleteProduct,
+  getFeaturedProducts,
+  updateFeaturedOrder,
+  updateFeaturedOrders
 } from '../controllers/productController.js';
 
 // Multer error handling middleware
@@ -45,19 +48,22 @@ const upload = multer({
     files: 50 // Maximum 50 files (ana resimler + renk resimleri)
   },
   fileFilter: (req, file, cb) => {
-    // Sadece image field'larını kontrol et
-    if (file.fieldname !== 'images' && file.fieldname !== 'colorImages') {
-      return cb(null, false);
-    }
+    console.log('📁 Dosya yükleme:', {
+      fieldname: file.fieldname,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
     
-    const allowedTypes = /jpeg|jpg|png|webp/;
+    const allowedTypes = /jpeg|jpg|png|webp|gif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
     
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Sadece resim dosyaları yüklenebilir! (JPEG, JPG, PNG, WEBP)'));
+      console.log('❌ Dosya reddedildi:', file.originalname, file.mimetype);
+      cb(new Error('Sadece resim dosyaları yüklenebilir! (JPEG, JPG, PNG, WEBP, GIF)'));
     }
   }
 });
@@ -70,9 +76,12 @@ const uploadFields = upload.fields([
 
 // Routes
 router.get('/', getAllProducts);
+router.get('/featured', getFeaturedProducts);
 router.get('/:id', getProductById);
 router.post('/', uploadFields, handleMulterError, createProduct);
 router.put('/:id', uploadFields, handleMulterError, updateProduct);
+router.put('/featured/order', updateFeaturedOrder);
+router.put('/featured/orders', updateFeaturedOrders);
 router.delete('/:id', deleteProduct);
 
 export default router;

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Filter, X } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Filter, X, Star, GripVertical, Save } from 'lucide-react'
 import api from '../../utils/api'
 import ProductCard from '../../components/admin/ProductCard'
 import ProductForm from '../../components/admin/ProductForm'
@@ -13,6 +13,9 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true)
   const [selectedBrand, setSelectedBrand] = useState(null)
   const [filteredProducts, setFilteredProducts] = useState([])
+  const [featuredProducts, setFeaturedProducts] = useState([])
+  const [isFeaturedOpen, setIsFeaturedOpen] = useState(false)
+  const [featuredLoading, setFeaturedLoading] = useState(false)
 
   // Marka listesi
   const brands = [
@@ -20,20 +23,37 @@ const AdminProducts = () => {
     { id: 'adidas', name: 'Adidas', color: 'bg-black', textColor: 'text-white' },
     { id: 'new-balance', name: 'New Balance', color: 'bg-red-600', textColor: 'text-white' },
     { id: 'calvin-klein', name: 'Calvin Klein', color: 'bg-blue-800', textColor: 'text-white' },
+    { id: 'puma', name: 'Puma', color: 'bg-orange-600', textColor: 'text-white' },
     { id: 'vans', name: 'Vans', color: 'bg-white', textColor: 'text-black', border: 'border-2 border-gray-300' }
   ]
 
   useEffect(() => {
     fetchProducts()
     fetchCampaigns()
+    fetchFeaturedProducts()
   }, [])
 
-  // Ürünleri markaya göre filtrele
+  // Normalizasyon: TR karakterler, özel işaretler, tire/alt tire ve çoklu boşlukları sadeleştir
+  const normalize = (s) => (s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9ğüşiıçö\s\-]/g, '')
+    .replace(/[\-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Ürünleri markaya göre filtrele (başlık üzerinden eşleşme)
   useEffect(() => {
     if (selectedBrand) {
-      const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(selectedBrand.toLowerCase())
-      )
+      const brandNeedle = normalize(selectedBrand)
+      const filtered = products.filter(product => {
+        const haystack = normalize(product.name)
+        return (
+          haystack.includes(` ${brandNeedle} `) ||
+          haystack.startsWith(`${brandNeedle} `) ||
+          haystack.endsWith(` ${brandNeedle}`) ||
+          haystack === brandNeedle
+        )
+      })
       setFilteredProducts(filtered)
     } else {
       setFilteredProducts(products)
@@ -170,6 +190,79 @@ const AdminProducts = () => {
     setSelectedBrand(null)
   }
 
+  // Öne çıkarılmış ürünleri yönet
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await api.get('/products/featured')
+      setFeaturedProducts(response.data || [])
+    } catch (error) {
+      console.error('Öne çıkarılmış ürünler yüklenirken hata:', error)
+      setFeaturedProducts([])
+    }
+  }
+
+  const handleFeaturedDragEnd = (result) => {
+    if (!result.destination) return
+
+    const items = Array.from(featuredProducts)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    // Sırayı güncelle
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      featuredOrder: index + 1
+    }))
+    
+    setFeaturedProducts(updatedItems)
+  }
+
+  const handleSaveFeaturedOrder = async () => {
+    try {
+      setFeaturedLoading(true)
+      const featuredProductsToSave = featuredProducts.map(product => ({
+        id: product.id,
+        featuredOrder: product.featuredOrder
+      }))
+      
+      await api.put('/products/featured/orders', {
+        featuredProducts: featuredProductsToSave
+      })
+      
+      alert('Öne çıkarma sıraları başarıyla kaydedildi!')
+      fetchProducts() // Ana ürün listesini güncelle
+    } catch (error) {
+      console.error('Öne çıkarma sıraları kaydedilirken hata:', error)
+      alert('Öne çıkarma sıraları kaydedilemedi.')
+    } finally {
+      setFeaturedLoading(false)
+    }
+  }
+
+  const handleAddToFeatured = (product) => {
+    if (featuredProducts.length >= 8) {
+      alert('Maksimum 8 ürün öne çıkarabilirsiniz.')
+      return
+    }
+
+    const newFeaturedProduct = {
+      ...product,
+      featuredOrder: featuredProducts.length + 1
+    }
+    
+    setFeaturedProducts([...featuredProducts, newFeaturedProduct])
+  }
+
+  const handleRemoveFromFeatured = (productId) => {
+    const updatedFeatured = featuredProducts.filter(p => p.id !== productId)
+      .map((product, index) => ({
+        ...product,
+        featuredOrder: index + 1
+      }))
+    
+    setFeaturedProducts(updatedFeatured)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -226,15 +319,22 @@ const AdminProducts = () => {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {brands.map(brand => {
-            const brandProducts = products.filter(product => 
-              product.name.toLowerCase().includes(brand.id.replace('-', ' '))
-            )
+            const brandProducts = products.filter(product => {
+              const haystack = normalize(product.name)
+              const needle = normalize(brand.id)
+              return (
+                haystack.includes(` ${needle} `) ||
+                haystack.startsWith(`${needle} `) ||
+                haystack.endsWith(` ${needle}`) ||
+                haystack === needle
+              )
+            })
             
             return (
               <div
                 key={brand.id}
                 className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${brand.color} ${brand.border || ''}`}
-                onClick={() => setSelectedBrand(brand.name)}
+                onClick={() => setSelectedBrand(brand.id)}
               >
                 {/* Brand Name */}
                 <div className={`p-4 text-center ${brand.textColor}`}>
@@ -258,6 +358,85 @@ const AdminProducts = () => {
             )
           })}
         </div>
+      </div>
+
+      {/* Öne Çıkarılmış Ürünler Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Star className="w-5 h-5 text-yellow-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Öne Çıkarılmış Ürünler</h2>
+            <span className="text-sm text-gray-500">({featuredProducts.length}/8)</span>
+          </div>
+          <button
+            onClick={() => setIsFeaturedOpen(!isFeaturedOpen)}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            {isFeaturedOpen ? 'Gizle' : 'Yönet'}
+          </button>
+        </div>
+
+        {isFeaturedOpen && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <div className="mb-4">
+              <p className="text-sm text-yellow-800 mb-4">
+                Koleksiyon sayfasında öne çıkarılacak ürünleri seçin ve sıralayın. Maksimum 8 ürün seçebilirsiniz.
+              </p>
+              
+              {/* Öne Çıkarılmış Ürünler Listesi */}
+              <div className="space-y-3 mb-4">
+                {featuredProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm border"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm">{product.name}</h4>
+                        <p className="text-xs text-gray-500">₺{product.price.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleRemoveFromFeatured(product.id)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Öne çıkarmadan kaldır"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {featuredProducts.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Star className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p>Henüz öne çıkarılmış ürün yok</p>
+                    <p className="text-xs">Aşağıdan ürünler seçerek öne çıkarabilirsiniz</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Kaydet Butonu */}
+              {featuredProducts.length > 0 && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveFeaturedOrder}
+                    disabled={featuredLoading}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{featuredLoading ? 'Kaydediliyor...' : 'Sırayı Kaydet'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Products Grid */}
@@ -289,14 +468,19 @@ const AdminProducts = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
+          {filteredProducts.map(product => {
+            const isFeatured = featuredProducts.some(fp => fp.id === product.id)
+            return (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onAddToFeatured={handleAddToFeatured}
+                isFeatured={isFeatured}
+              />
+            )
+          })}
         </div>
       )}
 

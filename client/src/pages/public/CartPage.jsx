@@ -88,6 +88,13 @@ const CartPage = () => {
           </Link>
         </div>
 
+        {/* Sürekli Teşvik Notu */}
+        <div className="mb-6 sm:mb-8">
+          <div className="w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-primary-800 text-sm text-center">
+            Alışverişe devam edin, fırsatları kaçırmayın!
+          </div>
+        </div>
+
         {/* Campaign Info Banner */}
         {items.some(item => item.campaign && 
           (item.campaign.type === 'second_pair_699' || 
@@ -264,16 +271,13 @@ const CartPage = () => {
                 )}
                 <div className="flex justify-between text-gray-600">
                   <span>Kargo:</span>
-                  <span className="text-green-600 font-medium">Ücretsiz</span>
+                  <span className="font-medium">₺100</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>KDV:</span>
-                  <span>₺{(getTotalPrice() * 0.18).toFixed(2)}</span>
-                </div>
+                {/* KDV kaldırıldı */}
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-xl font-bold text-gray-900">
                     <span>Toplam:</span>
-                    <span>₺{(getTotalPrice() * 1.18).toFixed(2)}</span>
+                    <span>₺{(getTotalPrice() + 100).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -295,7 +299,7 @@ const CartPage = () => {
                 </div>
                 <div className="flex items-center space-x-3 text-sm text-gray-600">
                   <Truck className="w-5 h-5 text-blue-600" />
-                  <span>Ücretsiz kargo (150₺ üzeri)</span>
+                  <span>Standart kargo ücreti: ₺100</span>
                 </div>
                 <div className="flex items-center space-x-3 text-sm text-gray-600">
                   <CheckCircle className="w-5 h-5 text-green-600" />
