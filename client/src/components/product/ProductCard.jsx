@@ -6,6 +6,7 @@ import { buildAssetUrl } from '../../utils/api'
 const ProductCard = ({ product }) => {
   const addItem = useCartStore((state) => state.addItem)
   const [showSizeWarning, setShowSizeWarning] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const handleAddToCart = (e) => {
     e.preventDefault()
@@ -26,13 +27,18 @@ const ProductCard = ({ product }) => {
       <div className="group cursor-pointer h-full flex flex-col">
         {/* Product Images */}
         <div className="relative overflow-hidden bg-neutral-100 aspect-[3/4] mb-2 md:mb-4">
-          {product.images && product.images.length > 0 ? (
+          {imageError || (!product.images?.length && !product.image) ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-neutral-300 text-sm uppercase tracking-wider">Görsel Yok</div>
+            </div>
+          ) : product.images && product.images.length > 0 ? (
             <div className="relative w-full h-full">
               <img
                 src={buildAssetUrl(product.images[0])}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-300"
                 loading="lazy"
+                onError={() => setImageError(true)}
               />
               {product.images.length > 1 && (
                 <div className="absolute bottom-1.5 left-1.5 md:bottom-3 md:left-3 bg-white text-neutral-900 text-[10px] md:text-xs px-1.5 py-0.5 md:px-3 md:py-1 uppercase tracking-wider font-medium">
@@ -40,17 +46,14 @@ const ProductCard = ({ product }) => {
                 </div>
               )}
             </div>
-          ) : product.image ? (
+          ) : (
             <img
               src={buildAssetUrl(product.image)}
               alt={product.name}
               className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-300"
               loading="lazy"
+              onError={() => setImageError(true)}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-neutral-300 text-sm uppercase tracking-wider">Görsel Yok</div>
-            </div>
           )}
           
           {product.campaign && (

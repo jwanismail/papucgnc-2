@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Edit, Trash2, Package, AlertTriangle, Star } from 'lucide-react'
 import { buildAssetUrl } from '../../utils/api'
 
 const ProductCard = ({ product, onEdit, onDelete, onAddToFeatured, isFeatured = false }) => {
+  const [imageError, setImageError] = useState(false)
+  
   // Numara stoklarını kontrol et
   const sizeStock = product.sizeStock 
     ? (typeof product.sizeStock === 'string' ? JSON.parse(product.sizeStock) : product.sizeStock)
@@ -19,28 +22,29 @@ const ProductCard = ({ product, onEdit, onDelete, onAddToFeatured, isFeatured = 
     <div className="card group hover:shadow-lg transition-all duration-200">
       {/* Product Images */}
       <div className="relative overflow-hidden rounded-lg mb-4 bg-gray-100 h-48">
-        {product.images && product.images.length > 0 ? (
+        {imageError || (!product.images?.length && !product.image) ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center text-gray-500">
+              <Package className="w-16 h-16 mb-2" />
+              <span className="text-sm">Resim Yüklenemedi</span>
+            </div>
+          </div>
+        ) : (
           <div className="relative w-full h-full">
             <img
-              src={buildAssetUrl(product.images[0])}
+              src={product.images?.length > 0 
+                ? buildAssetUrl(product.images[0]) 
+                : buildAssetUrl(product.image)
+              }
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={() => setImageError(true)}
             />
-            {product.images.length > 1 && (
+            {product.images?.length > 1 && (
               <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                 +{product.images.length - 1} daha
               </div>
             )}
-          </div>
-        ) : product.image ? (
-          <img
-            src={buildAssetUrl(product.image)}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-16 h-16 text-gray-300" />
           </div>
         )}
         

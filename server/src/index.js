@@ -1,11 +1,20 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import productRoutes from './routes/productRoutes.js';
 import campaignRoutes from './routes/campaignRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
+
+// Uploads klasörünü oluştur (Railway için)
+const uploadsDir = 'uploads';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Uploads klasörü oluşturuldu');
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
