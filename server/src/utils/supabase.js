@@ -1,15 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+// Supabase geçici olarak devre dışı - Local storage kullanılıyor
+console.log('⚠️ Supabase devre dışı - Local storage kullanılıyor');
 
-// Supabase client oluştur
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.log('⚠️ Supabase environment variables eksik - Local storage kullanılıyor');
-  // throw new Error('SUPABASE_URL ve SUPABASE_ANON_KEY gerekli');
-}
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = null;
 
 // Supabase Storage'a dosya yükle
 export const uploadToSupabase = async (file, folder = 'products') => {
