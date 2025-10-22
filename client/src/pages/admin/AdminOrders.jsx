@@ -123,7 +123,7 @@ const AdminOrders = () => {
     if (selectedOrders.length === pendingOrdersIds.length && pendingOrdersIds.length > 0) {
       setSelectedOrders([])
     } else {
-      setSelectedOrders(pendingOrdersIds.slice(0, 10))
+      setSelectedOrders(pendingOrdersIds)
     }
   }
 

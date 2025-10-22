@@ -93,7 +93,7 @@ export const createOrder = async (req, res) => {
 // Tüm siparişleri getir (Admin)
 export const getAllOrders = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status } = req.query;
     
     const where = status ? { status } : {};
     
@@ -101,9 +101,7 @@ export const getAllOrders = async (req, res) => {
       where,
       orderBy: {
         createdAt: 'desc'
-      },
-      skip: (page - 1) * limit,
-      take: parseInt(limit)
+      }
     });
 
     // Sipariş sayısını al
@@ -114,12 +112,7 @@ export const getAllOrders = async (req, res) => {
         ...order,
         items: JSON.parse(order.items)
       })),
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
-      }
+      total
     });
 
   } catch (error) {

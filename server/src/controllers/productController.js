@@ -2,6 +2,19 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Resim URL helper function - Cloudinary veya local dosya sistemi için
+const getImageUrl = (file) => {
+  if (!file) return '';
+  
+  // Cloudinary kullanıldığında file.secure_url döner
+  if (file.secure_url) {
+    return file.secure_url;
+  }
+  
+  // Local dosya sistemi için
+  return `/uploads/${file.filename}`;
+};
+
 // Tüm ürünleri getir
 export const getAllProducts = async (req, res) => {
   try {
@@ -102,8 +115,8 @@ export const createProduct = async (req, res) => {
     const validCampaignId = campaignId && campaignId.trim() !== '' ? campaignId : null;
     
     // Ana ürün resimleri
-    const image = mainImages.length > 0 ? `/uploads/${mainImages[0].filename}` : '';
-    const images = mainImages.length > 0 ? JSON.stringify(mainImages.map(file => `/uploads/${file.filename}`)) : null;
+    const image = mainImages.length > 0 ? getImageUrl(mainImages[0]) : '';
+    const images = mainImages.length > 0 ? JSON.stringify(mainImages.map(file => getImageUrl(file))) : null;
     
     // Renk seçeneklerini işle
     let colorOptionsJSON = null;
@@ -118,7 +131,7 @@ export const createProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            colorImagePaths.push(`/uploads/${colorImages[colorImageIndex].filename}`);
+            colorImagePaths.push(getImageUrl(colorImages[colorImageIndex]));
             colorImageIndex++;
           }
           
@@ -209,8 +222,8 @@ export const updateProduct = async (req, res) => {
     
     // Yeni ana resimler varsa güncelle
     if (mainImages.length > 0) {
-      updateData.image = `/uploads/${mainImages[0].filename}`;
-      updateData.images = JSON.stringify(mainImages.map(file => `/uploads/${file.filename}`));
+      updateData.image = getImageUrl(mainImages[0]);
+      updateData.images = JSON.stringify(mainImages.map(file => getImageUrl(file)));
     }
     
     // Renk seçeneklerini güncelle
@@ -224,7 +237,7 @@ export const updateProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            colorImagePaths.push(`/uploads/${colorImages[colorImageIndex].filename}`);
+            colorImagePaths.push(getImageUrl(colorImages[colorImageIndex]));
             colorImageIndex++;
           }
           

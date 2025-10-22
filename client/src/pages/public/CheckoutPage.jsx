@@ -25,6 +25,8 @@ const CheckoutPage = () => {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
+  const [showTruckAnimation, setShowTruckAnimation] = useState(false)
+  const [orderCompleted, setOrderCompleted] = useState(false)
   
   // Kargo firması sabit: Sürat Kargo
   const shippingMethod = 'Sürat Kargo'
@@ -55,6 +57,7 @@ const CheckoutPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsProcessing(true)
+    setShowTruckAnimation(true)
     
     try {
       // Sipariş verilerini hazırla
@@ -73,19 +76,27 @@ const CheckoutPage = () => {
       
       if (response.data?.success) {
         setOrderNumber(response.data.order.orderNumber)
-        setShowSuccessToast(true)
-        clearCart()
         
-        // 3 saniye sonra ana sayfaya yönlendir
+        // Premium kamyon animasyonu bitince sipariş tamamlandı durumunu göster
+        setTimeout(() => {
+          setShowTruckAnimation(false)
+          setOrderCompleted(true)
+          setShowSuccessToast(true)
+          clearCart()
+        }, 5500) // Premium animasyon için 5.5 saniye bekle
+        
+        // 7 saniye sonra ana sayfaya yönlendir
         setTimeout(() => {
           window.location.href = '/'
-        }, 3000)
+        }, 7000)
       } else {
         throw new Error('Sipariş oluşturulurken hata oluştu')
       }
     } catch (error) {
       console.error('Sipariş hatası:', error)
       alert('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.')
+      setShowTruckAnimation(false)
+      setIsProcessing(false)
     } finally {
       setIsProcessing(false)
     }
@@ -96,8 +107,80 @@ const CheckoutPage = () => {
   const discountedSubtotal = getTotalPrice() // kampanya indirimi uygulanmış ara toplam
   const finalTotal = (discountedSubtotal + shippingCost).toFixed(2)
 
+  // Ultimate Modern Button Animation - Cursor Premium Level
+  const ButtonTruckAnimation = () => (
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden animation-container">
+      {/* Gradient Background Animation */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-gradient-shift"></div>
+      
+      {/* Animated Road with Particles */}
+      <div className="absolute bottom-2 left-0 w-full h-1 bg-gradient-to-r from-gray-400 via-gray-300 to-gray-400 rounded-full road-premium">
+        <div className="road-dash"></div>
+        <div className="road-particle"></div>
+        <div className="road-particle delay-1"></div>
+        <div className="road-particle delay-2"></div>
+      </div>
+      
+      {/* Particle System */}
+      <div className="absolute inset-0 particle-system">
+        <div className="particle smoke-1"></div>
+        <div className="particle smoke-2"></div>
+        <div className="particle smoke-3"></div>
+        <div className="particle sparkle-1"></div>
+        <div className="particle sparkle-2"></div>
+        <div className="particle sparkle-3"></div>
+      </div>
+      
+      {/* Premium Truck Container */}
+      <div className="relative truck-container-premium">
+        {/* Truck with Advanced Effects */}
+        <div className="truck-wrapper">
+          <img
+            src="/kamyon.png"
+            alt="Kamyon"
+            width="60"
+            height="40"
+            className="truck-premium"
+            onError={(e) => {
+              console.error('Kamyon resmi yüklenemedi:', e.target.src);
+              e.target.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log('Kamyon resmi başarıyla yüklendi');
+            }}
+          />
+          {/* Truck Shadow */}
+          <div className="truck-shadow"></div>
+          {/* Truck Glow Effect */}
+          <div className="truck-glow"></div>
+        </div>
+        
+        {/* Premium Box Animation */}
+        <div className="absolute box-container-premium">
+          <div className="box-premium">
+            <div className="box-face front"></div>
+            <div className="box-face back"></div>
+            <div className="box-face right"></div>
+            <div className="box-face left"></div>
+            <div className="box-face top"></div>
+            <div className="box-face bottom"></div>
+          </div>
+          {/* Box Trail Effect */}
+          <div className="box-trail"></div>
+        </div>
+        
+        {/* Success Ripple Effect */}
+        <div className="ripple-effect"></div>
+      </div>
+      
+      {/* Ambient Light */}
+      <div className="absolute inset-0 ambient-light"></div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
+      
       {/* Success Toast Notification */}
       {showSuccessToast && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down">
@@ -449,20 +532,49 @@ const CheckoutPage = () => {
                 </p>
               </div>
 
-              <button
-                type="submit"
-                disabled={
-                  !paymentMethod || 
-                  !termsAccepted || 
-                  !formData.detailedAddress || 
-                  !formData.district || 
-                  isProcessing
-                }
-                onClick={handleSubmit}
-                className="w-full btn-primary text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? 'İşleniyor...' : 'SİPARİŞİ ONAYLA'}
-              </button>
+              <div className="relative">
+                <button
+                  type="submit"
+                  disabled={
+                    !paymentMethod || 
+                    !termsAccepted || 
+                    !formData.detailedAddress || 
+                    !formData.district || 
+                    isProcessing ||
+                    orderCompleted
+                  }
+                  onClick={handleSubmit}
+                  className={`w-full text-lg py-4 disabled:cursor-not-allowed flex items-center justify-center space-x-2 relative overflow-hidden transition-all duration-500 ${
+                    orderCompleted 
+                      ? 'bg-green-600 hover:bg-green-700 text-white success-button-state shadow-lg' 
+                      : 'btn-primary disabled:opacity-50'
+                  }`}
+                >
+                  {/* Kamyon animasyonu buton içinde */}
+                  {showTruckAnimation && !orderCompleted && <ButtonTruckAnimation />}
+                  
+                  {/* Buton metni */}
+                  <span className={`${
+                    showTruckAnimation && !orderCompleted 
+                      ? 'opacity-0 scale-90' 
+                      : 'opacity-100 scale-100'
+                    } transition-all duration-500 flex items-center justify-center space-x-3`}>
+                    {orderCompleted ? (
+                      <>
+                        <CheckCircle className="w-6 h-6 animate-check-bounce" />
+                        <span className="font-semibold tracking-wide">SİPARİŞİNİZ ALINDI</span>
+                      </>
+                    ) : isProcessing ? (
+                      <span className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>İşleniyor...</span>
+                      </span>
+                    ) : (
+                      <span>SİPARİŞİ ONAYLA</span>
+                    )}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
