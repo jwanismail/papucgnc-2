@@ -254,12 +254,7 @@ export const updateBulkOrderStatus = async (req, res) => {
       });
     }
 
-    if (orderIds.length > 10) {
-      return res.status(400).json({
-        error: 'Limit aşıldı',
-        message: 'En fazla 10 sipariş aynı anda güncellenebilir'
-      });
-    }
+    // Limit kaldırıldı - artık sınırsız sipariş güncellenebilir
 
     // Mevcut siparişleri kontrol et
     const existingOrders = await prisma.order.findMany({

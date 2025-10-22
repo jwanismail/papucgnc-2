@@ -77,10 +77,7 @@ const AdminOrders = () => {
       return
     }
 
-    if (selectedOrders.length > 10) {
-      alert('En fazla 10 sipariş aynı anda seçebilirsiniz!')
-      return
-    }
+    // Limit kaldırıldı - artık sınırsız sipariş seçilebilir
 
     setBulkLoading(true)
     try {
@@ -106,10 +103,7 @@ const AdminOrders = () => {
       if (prev.includes(orderId)) {
         return prev.filter(id => id !== orderId)
       } else {
-        if (prev.length >= 10) {
-          alert('En fazla 10 sipariş seçebilirsiniz!')
-          return prev
-        }
+        // Limit kaldırıldı - artık sınırsız sipariş seçilebilir
         return [...prev, orderId]
       }
     })
