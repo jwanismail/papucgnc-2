@@ -15,7 +15,7 @@ import AdminStats from './pages/admin/AdminStats'
 
 function App() {
   // Bakım modu - gerekirse .env ile yönetilebilir: import.meta.env.VITE_MAINTENANCE === 'true'
-  const maintenanceEnabled = true
+  const maintenanceEnabled = false
 
   // Admin rotalarında bakım overlay'i gösterme
   const LocationAwareLayout = () => {
