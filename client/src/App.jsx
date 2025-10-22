@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminCampaigns from './pages/admin/AdminCampaigns'
 import AdminOrders from './pages/admin/AdminOrders'
+import AdminStats from './pages/admin/AdminStats'
 
 function App() {
   // Bakım modu - gerekirse .env ile yönetilebilir: import.meta.env.VITE_MAINTENANCE === 'true'
@@ -39,6 +40,7 @@ function App() {
             <Route path="/jwanadmin/products" element={<AdminProducts />} />
             <Route path="/jwanadmin/campaigns" element={<AdminCampaigns />} />
             <Route path="/jwanadmin/orders" element={<AdminOrders />} />
+            <Route path="/jwanadmin/stats" element={<AdminStats />} />
           </Routes>
         </main>
         {/* Footer - Sadece Desktop'ta Görünür */}

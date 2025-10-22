@@ -1,8 +1,52 @@
 import { Link } from 'react-router-dom'
 import { Package, Tag, BarChart3, ShoppingCart } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import api from '../../utils/api'
 import AdminAuth from '../../components/admin/AdminAuth'
 
 const AdminDashboard = () => {
+  const [quickStats, setQuickStats] = useState({
+    totalProducts: 0,
+    activeCampaigns: 0,
+    totalSales: 0
+  })
+
+  useEffect(() => {
+    fetchQuickStats()
+  }, [])
+
+  const fetchQuickStats = async () => {
+    try {
+      const [productsRes, campaignsRes, ordersRes] = await Promise.all([
+        api.get('/products'),
+        api.get('/campaigns'),
+        api.get('/orders')
+      ])
+
+      const products = productsRes.data || []
+      const campaigns = campaignsRes.data || []
+      const orders = ordersRes.data || []
+
+      const totalSales = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+      const activeCampaigns = campaigns.filter(campaign => campaign.isActive).length
+
+      setQuickStats({
+        totalProducts: products.length,
+        activeCampaigns,
+        totalSales
+      })
+    } catch (error) {
+      console.error('Hızlı istatistikler yüklenirken hata:', error)
+    }
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY'
+    }).format(amount)
+  }
+
   const menuItems = [
     {
       title: 'Ürün Yönetimi',
@@ -29,7 +73,7 @@ const AdminDashboard = () => {
       title: 'İstatistikler',
       description: 'Satış ve ürün istatistikleri',
       icon: BarChart3,
-      link: '#',
+      link: '/jwanadmin/stats',
       color: 'bg-green-500'
     }
   ]
@@ -76,15 +120,15 @@ const AdminDashboard = () => {
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
             <p className="text-blue-100 text-sm font-medium mb-1">Toplam Ürün</p>
-            <p className="text-4xl font-bold">-</p>
+            <p className="text-4xl font-bold">{quickStats.totalProducts}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
             <p className="text-purple-100 text-sm font-medium mb-1">Aktif Kampanya</p>
-            <p className="text-4xl font-bold">-</p>
+            <p className="text-4xl font-bold">{quickStats.activeCampaigns}</p>
           </div>
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
             <p className="text-green-100 text-sm font-medium mb-1">Toplam Satış</p>
-            <p className="text-4xl font-bold">-</p>
+            <p className="text-4xl font-bold">{formatCurrency(quickStats.totalSales)}</p>
           </div>
         </div>
       </div>
