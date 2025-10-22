@@ -1,18 +1,21 @@
 import { PrismaClient } from '@prisma/client';
+import { uploadToFirebase } from '../utils/firebase.js';
 
 const prisma = new PrismaClient();
 
-// Resim URL helper function - Cloudinary veya local dosya sistemi için
-const getImageUrl = (file) => {
-  if (!file) return '';
-  
-  // Cloudinary kullanıldığında file.secure_url döner
-  if (file.secure_url) {
-    return file.secure_url;
+// Firebase'e dosya yükle ve URL döndür
+const uploadFileToFirebase = async (file, folder = 'products') => {
+  try {
+    if (!file || !file.buffer) {
+      return '';
+    }
+    
+    const result = await uploadToFirebase(file, folder);
+    return result.url;
+  } catch (error) {
+    console.error('Firebase upload hatası:', error);
+    return '';
   }
-  
-  // Local dosya sistemi için
-  return `/uploads/${file.filename}`;
 };
 
 // Tüm ürünleri getir
@@ -114,9 +117,19 @@ export const createProduct = async (req, res) => {
     // CampaignId validation - boş string ise null yap
     const validCampaignId = campaignId && campaignId.trim() !== '' ? campaignId : null;
     
-    // Ana ürün resimleri
-    const image = mainImages.length > 0 ? getImageUrl(mainImages[0]) : '';
-    const images = mainImages.length > 0 ? JSON.stringify(mainImages.map(file => getImageUrl(file))) : null;
+    // Ana ürün resimleri - Firebase'e yükle
+    let image = '';
+    let images = null;
+    
+    if (mainImages.length > 0) {
+      const imageUrls = [];
+      for (const file of mainImages) {
+        const url = await uploadFileToFirebase(file, 'products');
+        if (url) imageUrls.push(url);
+      }
+      image = imageUrls[0] || '';
+      images = imageUrls.length > 0 ? JSON.stringify(imageUrls) : null;
+    }
     
     // Renk seçeneklerini işle
     let colorOptionsJSON = null;
@@ -126,12 +139,13 @@ export const createProduct = async (req, res) => {
         let colorImageIndex = 0;
         
         // Her renk için resimleri ata
-        const processedColorOptions = colorOptionsData.map(colorOption => {
+        const processedColorOptions = await Promise.all(colorOptionsData.map(async colorOption => {
           const imageCount = colorOption.imageCount || 0;
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            colorImagePaths.push(getImageUrl(colorImages[colorImageIndex]));
+            const url = await uploadFileToFirebase(colorImages[colorImageIndex], 'products/colors');
+            if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
           
@@ -139,7 +153,7 @@ export const createProduct = async (req, res) => {
             name: colorOption.name,
             images: colorImagePaths
           };
-        });
+        }));
         
         colorOptionsJSON = JSON.stringify(processedColorOptions);
       } catch (e) {
@@ -220,10 +234,15 @@ export const updateProduct = async (req, res) => {
       campaignId: validCampaignId
     };
     
-    // Yeni ana resimler varsa güncelle
+    // Yeni ana resimler varsa güncelle - Firebase'e yükle
     if (mainImages.length > 0) {
-      updateData.image = getImageUrl(mainImages[0]);
-      updateData.images = JSON.stringify(mainImages.map(file => getImageUrl(file)));
+      const imageUrls = [];
+      for (const file of mainImages) {
+        const url = await uploadFileToFirebase(file, 'products');
+        if (url) imageUrls.push(url);
+      }
+      updateData.image = imageUrls[0] || '';
+      updateData.images = imageUrls.length > 0 ? JSON.stringify(imageUrls) : null;
     }
     
     // Renk seçeneklerini güncelle
@@ -232,12 +251,13 @@ export const updateProduct = async (req, res) => {
         const colorOptionsData = typeof colorOptions === 'string' ? JSON.parse(colorOptions) : colorOptions;
         let colorImageIndex = 0;
         
-        const processedColorOptions = colorOptionsData.map(colorOption => {
+        const processedColorOptions = await Promise.all(colorOptionsData.map(async colorOption => {
           const imageCount = colorOption.imageCount || 0;
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            colorImagePaths.push(getImageUrl(colorImages[colorImageIndex]));
+            const url = await uploadFileToFirebase(colorImages[colorImageIndex], 'products/colors');
+            if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
           
@@ -245,7 +265,7 @@ export const updateProduct = async (req, res) => {
             name: colorOption.name,
             images: colorImagePaths
           };
-        });
+        }));
         
         updateData.colorOptions = JSON.stringify(processedColorOptions);
       } catch (e) {

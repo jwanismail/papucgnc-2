@@ -1,8 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { 
   getAllProducts, 
   getProductById, 
@@ -32,43 +30,8 @@ const handleMulterError = (error, req, res, next) => {
 
 const router = express.Router();
 
-// Cloudinary konfigürasyonu
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Cloudinary storage konfigürasyonu
-const cloudinaryStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'papucgnc/products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-    public_id: (req, file) => {
-      // Unique dosya adı oluştur
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      return `product-${uniqueSuffix}`;
-    },
-    transformation: [
-      { width: 800, height: 800, crop: 'limit', quality: 'auto' }
-    ]
-  }
-});
-
-// Fallback için local storage (development için)
-const localStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// Storage seçimi - Cloudinary varsa onu kullan, yoksa local
-const storage = process.env.CLOUDINARY_CLOUD_NAME ? cloudinaryStorage : localStorage;
+// Firebase Storage için memory storage kullan
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage: storage,
