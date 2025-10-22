@@ -1,19 +1,19 @@
 import { PrismaClient } from '@prisma/client';
-import { uploadToFirebase } from '../utils/firebase.js';
+import { uploadToSupabase } from '../utils/supabase.js';
 
 const prisma = new PrismaClient();
 
-// Firebase'e dosya yükle ve URL döndür
-const uploadFileToFirebase = async (file, folder = 'products') => {
+// Supabase'e dosya yükle ve URL döndür
+const uploadFileToSupabase = async (file, folder = 'products') => {
   try {
     if (!file || !file.buffer) {
       return '';
     }
     
-    const result = await uploadToFirebase(file, folder);
+    const result = await uploadToSupabase(file, folder);
     return result.url;
   } catch (error) {
-    console.error('Firebase upload hatası:', error);
+    console.error('Supabase upload hatası:', error);
     return '';
   }
 };
@@ -117,14 +117,14 @@ export const createProduct = async (req, res) => {
     // CampaignId validation - boş string ise null yap
     const validCampaignId = campaignId && campaignId.trim() !== '' ? campaignId : null;
     
-    // Ana ürün resimleri - Firebase'e yükle
+    // Ana ürün resimleri - Supabase'e yükle
     let image = '';
     let images = null;
     
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await uploadFileToFirebase(file, 'products');
+        const url = await uploadFileToSupabase(file, 'products');
         if (url) imageUrls.push(url);
       }
       image = imageUrls[0] || '';
@@ -144,7 +144,7 @@ export const createProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await uploadFileToFirebase(colorImages[colorImageIndex], 'products/colors');
+            const url = await uploadFileToSupabase(colorImages[colorImageIndex], 'products/colors');
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
@@ -234,11 +234,11 @@ export const updateProduct = async (req, res) => {
       campaignId: validCampaignId
     };
     
-    // Yeni ana resimler varsa güncelle - Firebase'e yükle
+    // Yeni ana resimler varsa güncelle - Supabase'e yükle
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await uploadFileToFirebase(file, 'products');
+        const url = await uploadFileToSupabase(file, 'products');
         if (url) imageUrls.push(url);
       }
       updateData.image = imageUrls[0] || '';
@@ -256,7 +256,7 @@ export const updateProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await uploadFileToFirebase(colorImages[colorImageIndex], 'products/colors');
+            const url = await uploadFileToSupabase(colorImages[colorImageIndex], 'products/colors');
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }

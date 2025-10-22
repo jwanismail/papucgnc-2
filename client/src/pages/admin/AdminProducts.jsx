@@ -240,11 +240,7 @@ const AdminProducts = () => {
   }
 
   const handleAddToFeatured = (product) => {
-    if (featuredProducts.length >= 8) {
-      alert('Maksimum 8 ürün öne çıkarabilirsiniz.')
-      return
-    }
-
+    // Limit kaldırıldı - artık sınırsız ürün öne çıkarılabilir
     const newFeaturedProduct = {
       ...product,
       featuredOrder: featuredProducts.length + 1

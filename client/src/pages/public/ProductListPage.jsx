@@ -196,7 +196,7 @@ const ProductListPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-                {featuredProducts.slice(0, 6).map((product, index) => (
+                {featuredProducts.map((product, index) => (
                   <div key={product.id} className="relative group">
                     <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center z-10">
                       {index + 1}
