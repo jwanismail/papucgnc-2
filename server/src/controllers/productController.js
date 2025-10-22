@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import path from 'path';
-import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -123,7 +121,7 @@ export const createProduct = async (req, res) => {
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await getFileUrl(file, 'products');
+        const url = getFileUrl(file);
         if (url) imageUrls.push(url);
       }
       image = imageUrls[0] || '';
@@ -143,7 +141,7 @@ export const createProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await getFileUrl(colorImages[colorImageIndex], 'products/colors');
+            const url = getFileUrl(colorImages[colorImageIndex]);
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
@@ -237,7 +235,7 @@ export const updateProduct = async (req, res) => {
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await getFileUrl(file, 'products');
+        const url = getFileUrl(file);
         if (url) imageUrls.push(url);
       }
       updateData.image = imageUrls[0] || '';
@@ -255,7 +253,7 @@ export const updateProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await getFileUrl(colorImages[colorImageIndex], 'products/colors');
+            const url = getFileUrl(colorImages[colorImageIndex]);
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
