@@ -1,19 +1,18 @@
 import { PrismaClient } from '@prisma/client';
-import { uploadToSupabase } from '../utils/supabase.js';
+import path from 'path';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
-// Supabase'e dosya yükle ve URL döndür
-const uploadFileToSupabase = async (file, folder = 'products') => {
+// Local storage'dan dosya URL'i al
+const getFileUrl = (file) => {
   try {
-    if (!file || !file.buffer) {
+    if (!file || !file.filename) {
       return '';
     }
-    
-    const result = await uploadToSupabase(file, folder);
-    return result.url;
+    return `/uploads/${file.filename}`;
   } catch (error) {
-    console.error('Supabase upload hatası:', error);
+    console.error('File URL hatası:', error);
     return '';
   }
 };
@@ -124,7 +123,7 @@ export const createProduct = async (req, res) => {
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await uploadFileToSupabase(file, 'products');
+        const url = await getFileUrl(file, 'products');
         if (url) imageUrls.push(url);
       }
       image = imageUrls[0] || '';
@@ -144,7 +143,7 @@ export const createProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await uploadFileToSupabase(colorImages[colorImageIndex], 'products/colors');
+            const url = await getFileUrl(colorImages[colorImageIndex], 'products/colors');
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }
@@ -238,7 +237,7 @@ export const updateProduct = async (req, res) => {
     if (mainImages.length > 0) {
       const imageUrls = [];
       for (const file of mainImages) {
-        const url = await uploadFileToSupabase(file, 'products');
+        const url = await getFileUrl(file, 'products');
         if (url) imageUrls.push(url);
       }
       updateData.image = imageUrls[0] || '';
@@ -256,7 +255,7 @@ export const updateProduct = async (req, res) => {
           const colorImagePaths = [];
           
           for (let i = 0; i < imageCount && colorImageIndex < colorImages.length; i++) {
-            const url = await uploadFileToSupabase(colorImages[colorImageIndex], 'products/colors');
+            const url = await getFileUrl(colorImages[colorImageIndex], 'products/colors');
             if (url) colorImagePaths.push(url);
             colorImageIndex++;
           }

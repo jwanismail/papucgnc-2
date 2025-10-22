@@ -5,15 +5,19 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Supabase environment variables eksik!');
-  throw new Error('SUPABASE_URL ve SUPABASE_ANON_KEY gerekli');
+  console.log('⚠️ Supabase environment variables eksik - Local storage kullanılıyor');
+  // throw new Error('SUPABASE_URL ve SUPABASE_ANON_KEY gerekli');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Supabase Storage'a dosya yükle
 export const uploadToSupabase = async (file, folder = 'products') => {
   try {
+    if (!supabase) {
+      throw new Error('Supabase client bulunamadı - Local storage kullanın');
+    }
+    
     if (!file || !file.buffer) {
       throw new Error('Dosya veya buffer bulunamadı');
     }

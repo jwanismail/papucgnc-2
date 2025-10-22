@@ -30,8 +30,18 @@ const handleMulterError = (error, req, res, next) => {
 
 const router = express.Router();
 
-// Firebase Storage için memory storage kullan
-const storage = multer.memoryStorage();
+// Local storage için disk storage kullan
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const random = Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `product-${timestamp}-${random}${ext}`);
+  }
+});
 
 const upload = multer({ 
   storage: storage,
